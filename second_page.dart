@@ -94,7 +94,7 @@ class _CameraPageState extends State<CameraPage> {
     _cameraController = CameraController(firstCamera, resolutionPreset);
     await _cameraController.initialize();
 
-    await _setCameraConfiguration(720); //新增此段會導致崩潰？
+    // await _setCameraConfiguration(720); //新增此段會導致崩潰？
 
     if (_cameraController.value.isInitialized) {
       print("Camera resolution: ${_cameraController.value.previewSize}");
