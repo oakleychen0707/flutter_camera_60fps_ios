@@ -1,11 +1,20 @@
 import 'dart:async';
-import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 
-const List<String> list = <String>['720p/30fps', '1080p/30fps', '4K/30fps','720p/60fps','1080p/60fps','4K/60fps','1080p/120fps'];
+const List<String> resolutions = [
+  '720p/30fps',
+  '1080p/30fps',
+  '4K/30fps',
+  '720p/60fps',
+  '1080p/60fps',
+  '4K/60fps',
+  '1080p/120fps'
+];
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -39,76 +48,18 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class CameraPage extends StatefulWidget{
-  const CameraPage({
-    super.key,
-  });
-
+class CameraPage extends StatefulWidget {
   @override
-  State <CameraPage> createState() => _CameraViewState();
+  State<CameraPage> createState() => _CameraPageState();
 }
 
-class _CameraViewState extends State<CameraPage> {
-
+class _CameraPageState extends State<CameraPage> {
+  late CameraController _cameraController;
   bool _isLoading = true;
   bool _isRecording = false;
-  late CameraController _cameraController;
+  String _selectedResolution = resolutions[4]; // 預設: 1080p/60fps
 
-  String dropdownValue = list[4]; //默認1080p/60fps
-  String camerastatus = "1080p/60fps";
-
-
-  //設定相機的解析度與60fps//
   final MethodChannel _cameraConfigurationChannel = MethodChannel('samples.flutter.dev/camera_configuration');
-
-  Future<void> setCameraConfiguration(int resolution) async {
-    try {
-      final bool success = await _cameraConfigurationChannel.invokeMethod('setCameraConfiguration', {'format': resolution});
-      if (success) {
-        print('相機解析度：$resolution 設定成功');
-      } else {
-        print('設定失敗 相機解析度：$resolution');
-      }
-    } on PlatformException catch (e) {
-      print('Error: ${e.message}');
-    }
-  }
-  //設定相機的解析度與60fps//
-
-  Future<void> opencamera()async {
-    Map<String, int> cameraConfigurations = {
-      "1080p/60fps": 1080,
-      "720p/60fps": 720,
-      "4K/60fps": 2160,
-      "1080p/120fps": 1080120,
-    };
-
-    int? configuration = cameraConfigurations[camerastatus];
-
-    if (configuration != null) {
-      await setCameraConfiguration(configuration);
-    }
-
-    await _cameraController.prepareForVideoRecording();
-    await _cameraController.startVideoRecording();
-    setState(() => _isRecording = true);
-  }
-
-  late File videofile;
-
-  stoprecordVideo() async {
-    final file = await _cameraController.stopVideoRecording();
-    print(file.path);
-    videofile = File(file.path);
-
-    if(file != null)
-    {
-      var videoFilePath = videofile.path;
-      await GallerySaver.saveVideo(videoFilePath);
-      print(videoFilePath);
-    }
-    setState(() => _isRecording = false);
-  }
 
   @override
   void initState() {
@@ -126,61 +77,92 @@ class _CameraViewState extends State<CameraPage> {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
 
-    Map<String, ResolutionPreset> cameraConfigurations = {
-      "720p/30fps": ResolutionPreset.high,
-      "720p/60fps": ResolutionPreset.high,
-      "1080p/30fps": ResolutionPreset.veryHigh,
-      "1080p/60fps": ResolutionPreset.veryHigh,
-      "1080p/120fps": ResolutionPreset.veryHigh,
-      "4K/30fps": ResolutionPreset.ultraHigh,
-      "4K/60fps": ResolutionPreset.ultraHigh,
-    };
-
-    ResolutionPreset resolutionPreset = cameraConfigurations[camerastatus] ?? ResolutionPreset.veryHigh; //默認使用VeryHigh
+    ResolutionPreset getResolutionPreset(String resolution) {
+      switch (resolution) {
+        case '720p/30fps':
+        case '720p/60fps':
+          return ResolutionPreset.high;
+        case '4K/30fps':
+        case '4K/60fps':
+          return ResolutionPreset.ultraHigh;
+        default:
+          return ResolutionPreset.veryHigh;
+      }
+    }
+    ResolutionPreset resolutionPreset = getResolutionPreset(_selectedResolution);
 
     _cameraController = CameraController(firstCamera, resolutionPreset);
-    //// 720p (1280x720)high,
-    //// 1080p (1920x1080)veryHigh,
-    //// 2160p (3840x2160 on Android and iOS, 4096x2160 on Web)ultraHigh,
     await _cameraController.initialize();
 
+    await _setCameraConfiguration(720); //新增此段會導致崩潰？
+
     if (_cameraController.value.isInitialized) {
-      print("相機當前設定：");
-      print(_cameraController.value.previewSize);
+      print("Camera resolution: ${_cameraController.value.previewSize}");
     } else {
-      print("相機初始化失敗！");
+      print("Failed to initialize camera!");
     }
     setState(() => _isLoading = false);
   }
 
-  void _setCameraStatus(String value) {
-    Map<String, String> cameraStatusMap = {
-      '720p/30fps': '720p/30fps',
-      '1080p/30fps': '1080p/30fps',
-      '4K/30fps': '4K/30fps',
-      '720p/60fps': '720p/60fps',
-      '1080p/60fps': '1080p/60fps',
-      '4K/60fps': '4K/60fps',
-      '1080p/120fps': '1080p/120fps',
-    };
-
-    if (cameraStatusMap.containsKey(value)) {
-      camerastatus = cameraStatusMap[value]!;
-
-      if (['720p/30fps', '1080p/30fps', '4K/30fps'].contains(camerastatus)) {
-        _initCamera();
+  Future<void> _setCameraConfiguration(int resolution) async {
+    try {
+      final bool success = await _cameraConfigurationChannel.invokeMethod(
+        'setCameraConfiguration',
+        {'format': resolution},
+      );
+      if (success) {
+        print('Camera resolution set to: $resolution');
+      } else {
+        print('Failed to set camera resolution: $resolution');
       }
-      print(camerastatus);
+    } on PlatformException catch (e) {
+      print('Error: ${e.message}');
     }
   }
 
+  Future<void> _openCamera() async {
+    Map<String, int> cameraConfigurations = {
+      "1080p/60fps": 1080,
+      "720p/60fps": 720,
+      "4K/60fps": 2160,
+      "1080p/120fps": 1080120,
+    };
+
+    int? configuration = cameraConfigurations[_selectedResolution];
+    if (configuration != null) {
+      await _setCameraConfiguration(configuration);
+    }
+
+    await _cameraController.prepareForVideoRecording();
+    await _cameraController.startVideoRecording();
+    setState(() => _isRecording = true);
+  }
+
+  void _stopRecordVideo() async {
+    final file = await _cameraController.stopVideoRecording();
+    if (file != null) {
+      var videoFilePath = file.path;
+      await GallerySaver.saveVideo(videoFilePath);
+      print(videoFilePath);
+    }
+    setState(() => _isRecording = false);
+  }
+
+  void _setCameraStatus(String value) {
+    if (resolutions.contains(value)) {
+      _selectedResolution = value;
+      if (['720p/30fps', '1080p/30fps', '4K/30fps'].contains(_selectedResolution)) {
+        _initCamera();
+      }
+      print(_selectedResolution);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Container(
-        color: Colors.white,
-        child: const Center(
+      return Scaffold(
+        body: Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -190,108 +172,127 @@ class _CameraViewState extends State<CameraPage> {
           title: Text('Camera Page'),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
-            onPressed: (){
+            onPressed: () {
               Navigator.pop(context);
             },
           ),
         ),
-        body: Center(
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children:  <Widget>[
-              Padding(padding: EdgeInsets.all(2),
-                child: CameraPreview(_cameraController,
-                  child: Center(
-                    child:
-                    Text("+",style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 20,
-                        decoration: TextDecoration.none),),),),),
-              Padding(
-                padding: EdgeInsets.all(50),
-                child:
-                FloatingActionButton(
-                  backgroundColor: Colors.red,
-                  onPressed: _isRecording ? () => stoprecordVideo() :
-                      () => opencamera(),
-                  child: Icon(_isRecording == true? Icons.stop_sharp : Icons.circle,size: 50,),
-                ),
-              ),
-              Positioned(
-                top: 20,
-                left: 20,
-                child: Container(
-                  width: 140,
-                  height: 50,
-                  color: Colors.black.withOpacity(0.4),
-                  child: Center(
-                    child: Text(
-                      "相機解析度：",
-                      style: TextStyle(fontSize: 20, color: Colors.white, decoration: TextDecoration.none),
+        body: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(2),
+              child: CameraPreview(
+                _cameraController,
+                child: Center(
+                  child: Text(
+                    "+",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 20,
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
               ),
-              Positioned(
-                top: 20,
-                left: 160,
-                child:
-                Container(
-                  height: 50,
-                  width: 130,
-                  color: Colors.black.withOpacity(0.4),
-                  child:
-                  Theme(data: Theme.of(context).copyWith(
-                    canvasColor: Colors.black.withOpacity(0.4),),
-                    child: Center(
-                      child: Material(
-                        color: Colors.transparent,
+            ),
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.02,
+              left: null,   //置中
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10), // 左右各多出10
+                color: Colors.black.withOpacity(0.4),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      SizedBox(width: 10),
+                      Text(
+                        "Camera Resolution:",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          canvasColor: Colors.black.withOpacity(0.4),
+                        ),
                         child: DropdownButton<String>(
-                          value: dropdownValue,
-                          icon: Icon(Icons.arrow_drop_down_circle_outlined,color: Colors.white,),
+                          value: _selectedResolution,
+                          icon: Icon(
+                            Icons.arrow_drop_down_circle_outlined,
+                            color: Colors.white,
+                          ),
                           elevation: 16,
-                          style: TextStyle(color: Colors.white,fontSize: 16),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                           underline: Container(height: 2, color: Colors.white),
                           onChanged: (String? value) {
-                            setState(() {
-                              dropdownValue = value!;
-                              _setCameraStatus(value);
-                            });
+                            if (value != null) {
+                              setState(() {
+                                _selectedResolution = value;
+                                _setCameraStatus(value);
+                              });
+                            }
                           },
-                          items: list.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),),
-                    ),),
+                          items: resolutions.map<DropdownMenuItem<String>>(
+                                (String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            },
+                          ).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly ,
-                children: <Widget>[
-                  const SizedBox(width: 200),
-                  Container(
-                    height: 40,
-                    width: 100,
-                    color: Colors.black.withOpacity(0.4),
-                    child: Center(
-                      child: _isRecording == true?
-                      Text("正在錄影",style: TextStyle(color: Colors.white,fontSize: 20,decoration: TextDecoration.none),):
-                      Text("暫停錄影",style: TextStyle(color: Colors.white,fontSize: 20,decoration: TextDecoration.none),),
+            ),
+            Positioned(
+              bottom: 20,
+              child: FloatingActionButton(
+                backgroundColor: Colors.red,
+                onPressed: _isRecording ? _stopRecordVideo : _openCamera,
+                child: Icon(
+                  _isRecording ? Icons.stop_sharp : Icons.circle,
+                  size: 50,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 80,
+              child: Container(
+                height: 40,
+                width: 100,
+                color: Colors.black.withOpacity(0.4),
+                child: Center(
+                  child: _isRecording
+                      ? Text(
+                    "Recording",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      decoration: TextDecoration.none,
+                    ),
+                  )
+                      : Text(
+                    "Paused",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      decoration: TextDecoration.none,
                     ),
                   ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical:80),
-                  )
-                ],),
-            ],
-          ),
-        )
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
   }
 }
-
-
