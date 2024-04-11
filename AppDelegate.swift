@@ -24,6 +24,12 @@ import AVFoundation // Add this line for importing AVFoundation module
                         default:
                             break
                     }
+                    func setCameraFormat(_ device: AVCaptureDevice, formatIndex: Int, minFrameDuration: CMTime) {
+                        device.activeFormat = device.formats[formatIndex]
+                        device.activeVideoMinFrameDuration = minFrameDuration
+                        device.activeVideoMaxFrameDuration = minFrameDuration
+                        print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                    }
                     device.unlockForConfiguration()
                     result(true) // Return success
                 }
@@ -33,13 +39,6 @@ import AVFoundation // Add this line for importing AVFoundation module
         } else {
             result(false) // Return failure
         }
-    }
-
-    func setCameraFormat(_ device: AVCaptureDevice, formatIndex: Int, minFrameDuration: CMTime) {
-        device.activeFormat = device.formats[formatIndex]
-        device.activeVideoMinFrameDuration = minFrameDuration
-        device.activeVideoMaxFrameDuration = minFrameDuration
-        print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
     }
 
     override func application(
