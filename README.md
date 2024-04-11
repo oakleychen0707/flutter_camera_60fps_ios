@@ -62,15 +62,18 @@ dependencies:
 //1.
   final MethodChannel _cameraConfigurationChannel = MethodChannel('samples.flutter.dev/camera_configuration');
 //2.
-  Future<void> setCameraConfiguration(int resolution) async {
+  Future<void> _setCameraConfiguration(int resolution) async {
     try {
 //3.
-      final bool success = await _cameraConfigurationChannel.invokeMethod('setCameraConfiguration', {'format': resolution});
+      final bool success = await _cameraConfigurationChannel.invokeMethod(
+        'setCameraConfiguration',
+        {'format': resolution},
+      );
 //4.
       if (success) {
-        print('相機解析度：$resolution 設定成功');
+        print('Camera resolution set to: $resolution');
       } else {
-        print('設定失敗 相機解析度：$resolution');
+        print('Failed to set camera resolution: $resolution');
       }
 //5.
     } on PlatformException catch (e) {
@@ -108,29 +111,18 @@ import AVFoundation // Add this line for importing AVFoundation module
         if let device = AVCaptureDevice.default(for: .video) {
             do {
                 try device.lockForConfiguration()
+                device.whiteBalanceMode = .locked
                 if let arguments = call.arguments as? [String: Any],
                    let format = arguments["format"] as? Int {
                     switch format {
                         case 720:
-                            device.activeFormat = device.formats[18]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 18, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 1080:
-                            device.activeFormat = device.formats[30]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 30, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 2160:
-                            device.activeFormat = device.formats[55]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 55, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 1080120:
-                            device.activeFormat = device.formats[36]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 120)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 120)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 36, minFrameDuration: CMTimeMake(value: 1, timescale: 120))
                         default:
                             break
                     }
@@ -143,6 +135,13 @@ import AVFoundation // Add this line for importing AVFoundation module
         } else {
             result(false) // Return failure
         }
+    }
+
+    func setCameraFormat(_ device: AVCaptureDevice, formatIndex: Int, minFrameDuration: CMTime) {
+        device.activeFormat = device.formats[formatIndex]
+        device.activeVideoMinFrameDuration = minFrameDuration
+        device.activeVideoMaxFrameDuration = minFrameDuration
+        print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
     }
 //4.
     override func application(
@@ -218,8 +217,6 @@ device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
 # 結語
 
 Widget 就不詳細介紹了～ 可直接查看 main.dart 與 AppDelegate.swift(記得添加套件依賴與訪問權限！)
-
-想看更多：https://medium.com/@coco404100402/flutter-camera套件-設定錄影解析度與60fps-120fps-ios-ca650c092cfc
 
 當初也是踩了不少坑，才成功做出來🥲
 
