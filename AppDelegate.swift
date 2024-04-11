@@ -14,25 +14,13 @@ import AVFoundation // Add this line for importing AVFoundation module
                    let format = arguments["format"] as? Int {
                     switch format {
                         case 720:
-                            device.activeFormat = device.formats[18]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 18, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 1080:
-                            device.activeFormat = device.formats[30]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 30, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 2160:
-                            device.activeFormat = device.formats[55]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 55, minFrameDuration: CMTimeMake(value: 1, timescale: 60))
                         case 1080120:
-                            device.activeFormat = device.formats[36]
-                            device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 120)
-                            device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 120)
-                            print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
+                            setCameraFormat(device, formatIndex: 36, minFrameDuration: CMTimeMake(value: 1, timescale: 120))
                         default:
                             break
                     }
@@ -45,6 +33,13 @@ import AVFoundation // Add this line for importing AVFoundation module
         } else {
             result(false) // Return failure
         }
+    }
+
+    func setCameraFormat(_ device: AVCaptureDevice, formatIndex: Int, minFrameDuration: CMTime) {
+        device.activeFormat = device.formats[formatIndex]
+        device.activeVideoMinFrameDuration = minFrameDuration
+        device.activeVideoMaxFrameDuration = minFrameDuration
+        print(device.activeFormat.videoSupportedFrameRateRanges.first!.maxFrameRate)
     }
 
     override func application(
