@@ -21,7 +21,7 @@ This project supports video recording in seven formats: 720p/30fps, 1080p/30fps,
 The following project results image.
 （以下為專案成果圖）
 
-![The following project results image](https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282)
+<img src= https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282 width="20%" height="20%">
 
 ------------------------------------------------------------------------------------------------------------------
 
