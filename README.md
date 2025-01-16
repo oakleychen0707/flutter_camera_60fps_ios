@@ -1,4 +1,7 @@
 # flutter_camera_60fps_ios
+
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Foakleychen0707%2Fflutter_camera_60fps_ios%2Ftree%2Fmain&count_bg=%23473DC8&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+
 中文說明：
 
 使用 Flutter camera 套件 製作了可以設置解析度與 60fps 與 120fps 的錄影系統。
@@ -7,8 +10,7 @@
 
 此專案以支援以下7種格式的錄影App（720p/30fps、1080p/30fps、4K/30fps、720p/60fps、1080p/60fps、4K/60fps、1080p/120fps）。
 
-------------------------------------------------------------------------------------------------------------------
-
+---
 English instructions：
 
 Using the Flutter camera package to create a video recording application that allows for adjusting the resolution and frame rates to 60fps and 120fps.
