@@ -2,56 +2,75 @@
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Foakleychen0707%2Fflutter_camera_60fps_ios&count_bg=%23473DC8&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-中文說明：
+## Overview
 
-使用 Flutter camera 套件 製作了可以設置解析度與 60fps 與 120fps 的錄影系統。
+### Chinese Version:
 
-目前只支援iOS系統。
+使用 Flutter Camera 套件實現了一款支持設置解析度及高幀率（60fps 和 120fps）的錄影 App。
 
-此專案以支援以下7種格式的錄影App（720p/30fps、1080p/30fps、4K/30fps、720p/60fps、1080p/60fps、4K/60fps、1080p/120fps）。
+- **系統支持**：目前僅支持 iOS。
+
+- **格式支持**：該應用支持以下 7 種錄影格式：
+
+  - 720p/30fps
+  - 1080p/30fps
+  - 4K/30fps
+  - 720p/60fps
+  - 1080p/60fps
+  - 4K/60fps
+  - 1080p/120fps
+
+### English Version:
+
+This project uses the Flutter Camera package to create a video recording application capable of configuring resolution and high frame rates (60fps and 120fps).
+
+- **Supported System**: Currently available for iOS only.
+
+- **Supported Formats**: The app supports the following seven video recording formats:
+
+  - 720p/30fps
+  - 1080p/30fps
+  - 4K/30fps
+  - 720p/60fps
+  - 1080p/60fps
+  - 4K/60fps
+  - 1080p/120fps
 
 ---
-English instructions：
 
-Using the Flutter camera package to create a video recording application that allows for adjusting the resolution and frame rates to 60fps and 120fps.
-
-Please note that this feature is currently available only on iOS.
-
-This project supports video recording in seven formats: 720p/30fps, 1080p/30fps, 4K/30fps, 720p/60fps, 1080p/60fps, 4K/60fps, and 1080p/120fps.
-
-
-The following project results image.
-（以下為專案成果圖）
+## Project Preview
 
 <p align="center">
-<img src= https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282 width=300 >
+<img src="https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282" width=300>
 </p>
 
-------------------------------------------------------------------------------------------------------------------
+## Implementation Details
 
-主要是透過 Flutter 與 iOS 原生碼去溝通，實現方式是使用 main.dart 與 iOS的 AppDelegate.swift 之間建立平台通道執行特定的代碼。
+This project bridges Flutter and native iOS code through **Platform Channels**, enabling precise camera configuration. The primary files involved are:
 
-平台通道可以參考：https://doc.flutterchina.club/platform-channels/
+- `main.dart`: Contains Flutter code.
+- `AppDelegate.swift`: Manages iOS-native camera configurations.
 
-## 首先，先將以下套件加入 pubspec.yaml
+### Platform Channels Reference:
+- Documentation: [Flutter China Platform Channels](https://doc.flutterchina.club/platform-channels/)
 
-•  camera：用於訪問和控制設備相機的套件
+---
 
-官方文檔：https://pub.dev/packages/camera
+### Step 1: Add Dependencies
 
-•  gallery_saver：將拍攝的相片或影片保存到手機的套件
+Add the following packages to your `pubspec.yaml` file:
 
-官方文檔：https://pub.dev/packages/camera
-
-```
+```yaml
 dependencies:
   flutter:
     sdk: flutter
-  camera:
-  gallery_saver:
+  camera: # Used for accessing and controlling the device camera
+  gallery_saver: # Used for saving captured photos or videos to the gallery
 ```
 
-### 取得訪問相機的權限，新增兩行到 ios/Runner/Info.plist
+### Step 2: Request Permissions
+
+Add camera and microphone usage permissions to ios/Runner/Info.plist:
 
 ```
 <key>NSCameraUsageDescription</key>
@@ -59,49 +78,52 @@ dependencies:
 <key>NSMicrophoneUsageDescription</key>
 <string>your usage description here</string>
 ```
-## 接下來，建立「平台溝通」（main.dart）
 
-```
+### Step 3: Implement Platform Channels in `main.dart`
+
+The following example demonstrates how to configure camera resolution and frame rate:
+
+```dart
 //設定相機的解析度與fps//
 //1.
-  final MethodChannel _cameraConfigurationChannel = MethodChannel('samples.flutter.dev/camera_configuration');
+final MethodChannel _cameraConfigurationChannel = MethodChannel('samples.flutter.dev/camera_configuration');
 //2.
-  Future<void> _setCameraConfiguration(int resolution) async {
-    try {
-//3.
-      final bool success = await _cameraConfigurationChannel.invokeMethod(
-        'setCameraConfiguration',
-        {'format': resolution},
-      );
-//4.
-      if (success) {
-        print('Camera resolution set to: $resolution');
-      } else {
-        print('Failed to set camera resolution: $resolution');
-      }
-//5.
-    } on PlatformException catch (e) {
-      print('Error: ${e.message}');
+Future<void> _setCameraConfiguration(int resolution) async {
+  try {
+    //3.
+    final bool success = await _cameraConfigurationChannel.invokeMethod(
+      'setCameraConfiguration',
+      {'format': resolution},
+    );
+    //4.
+    if (success) {
+      print('Camera resolution set to: $resolution');
+    } else {
+      print('Failed to set camera resolution: $resolution');
     }
+    //5.
+  } on PlatformException catch (e) {
+    print('Error: ${e.message}');
   }
-  //設定相機的解析度與fps//
+}
+//設定相機的解析度與fps//
 ```
 
-1. 建立一個 ```_cameraConfigurationChannel``` 的通道，用來與原生平台溝通（iOS）
+1. Create a `_cameraConfigurationChannel` to communicate with the native platform (iOS).
 
-2. 定義一個 ```setCameraConfiguration``` 的函式，接收一個整數參數 ```resolution```（用來代表相機的解析度與fps）
+2. Define a `setCameraConfiguration` function that takes an integer parameter `resolution` (representing the camera's resolution and fps).
 
-3. 函式裡使用 ```_cameraConfigurationChannel.invokeMethod``` 來呼叫原生代碼中的 ```setCameraConfiguration```，並傳遞 ```resolution``` 參數
+3. Inside the function, use `_cameraConfigurationChannel.invokeMethod` to call the native method `setCameraConfiguration` and pass the `resolution` parameter.
 
-4. 如果設定成功（```success``` 為 ```true```），則會顯示一條訊息表示相機解析度設定成功，否則顯示設定失敗的訊息
+4. If the configuration is successful (`success` is `true`), a message will be displayed indicating that the camera resolution has been successfully set. Otherwise, a failure message will be shown.
 
-5. 如果在呼叫原生方法時出現異常（例如平台不支援等），則會捕獲 ```PlatformException``` 並輸出錯誤訊息
+5. If an exception occurs while calling the native method (e.g., platform not supported), the `PlatformException` will be caught and the error message will be printed.
 
-## AppDelegate.swift 的部分（ios/Runner/AppDelegate.swift）
+### Step 4: Configure Camera in `AppDelegate.swift`
 
-以下是完整的 AppDelegate.swift
+Below is the complete implementation for `AppDelegate.swift`:
 
-```
+```swift
 //1.
 import UIKit
 import Flutter
@@ -165,63 +187,57 @@ import AVFoundation // Add this line for importing AVFoundation module
 }
 ```
 
-1. 首先，導入 UIKit、Flutter 和 AVFoundation 模組
+#### 1. Import Required Modules  
+`UIKit`, `Flutter`, and `AVFoundation` are imported to enable iOS and Flutter integration and handle camera configurations.
 
-2. ```AppDelegate``` 類別繼承自 ```FlutterAppDelegate```，這是 Flutter 應用程式的主要代理（delegate）
+#### 2. AppDelegate Class Definition  
+The `AppDelegate` class extends `FlutterAppDelegate`, serving as the main delegate for the Flutter application.
 
-3. ```setCameraFps``` 方法是一個原生方法，接收來自 Flutter 的呼叫（```FlutterMethodCall```），並提供一個回傳結果的 callback（```FlutterResult```）
+#### 3. setCameraFps Method  
+- This method handles calls from Flutter to configure the camera's FPS.  
+- It retrieves the default video device (camera).  
+- Depending on the `format` value received from Flutter, it updates the camera's resolution and FPS settings.  
+- Configuration results (success or failure) are returned to Flutter.  
 
-•  它先檢查是否能取得預設的視訊裝置（相機）
+#### 4. Application Launch Setup  
+- The `application(_:didFinishLaunchingWithOptions:)` method sets up the communication channel between Flutter and the native iOS platform.  
+- The channel `cameraFpsChannel` is linked to the `setCameraFps` method.
 
-•  如果成功取得，則嘗試對相機進行配置設定
+⚠️ **Note:** Since the camera plugin is configured to use 30fps by default, the above implementation is only necessary for enabling frame rates higher than 30fps through communication with the native platform.
 
-•  根據 Flutter 傳遞的參數（arguments）中的 format 值，切換相機的格式和fps
+The following mappings represent the resolution and frame rate configurations supported:
 
-•  最後，解鎖相機配置，並根據設定的結果回傳成功或失敗
+- 720 → 720p/60fps (HD resolution at 60fps)
+- 1080 → 1080p/60fps (Full HD resolution at 60fps)
+- 2160 → 4K/60fps (Ultra HD resolution at 60fps)
+- 1080120 → 1080p/120fps (Full HD resolution at 120fps for high-speed recording)
 
-4. ```application(_:didFinishLaunchingWithOptions:)``` 方法是應用程式啟動時的回調方法
+### Step 5: Explore Supported Formats
 
-•  在這裡，它設定了 Flutter 與原生 iOS 之間的通訊通道（channel）```cameraFpsChannel```，並指定了方法為 ```setCameraFps```
+To identify other supported formats, use the following code snippet:
 
-
-
-__因為 camera套件本身就是設置成30fps，所以上面組要是針對30fps以上才需要與原生平台溝通__
-
-•  720 → 720p/60fps
-
-•  1080 → 1080p/60fps
-
-•  2160 → 4K/60fps
-
-•  1080120 → 1080p/120fps
-
-### 如果想要其他的錄影格式，可以使用以下程式碼，去印出設備所支援的所有格式
-
-```
+```swift
 for format in device.formats{
  let mediaType = format.mediaType
   let formatDescription = format.formatDescription
   let videoFieldOfView = format.videoFieldOfView
-// 印出mediaType、formatDescription和videoFieldOfView屬性
+// 印出 mediaType、formatDescription 和 videoFieldOfView 屬性
   print("The format of \(format) is \(mediaType) \(formatDescription) with \(videoFieldOfView) degrees")
 }
 ```
-並依據印出的格式修改程式碼
 
-```
+You can then modify the code accordingly:
+
+```swift
 device.activeFormat = device.formats[36]
 device.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 60)
 device.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 60)
 ```
 
 •  device.formats[36] → 設定錄影格式
-
 •  timescale：60 → 設定 fps
 
-# 結語
+# Conclusion
+The above guide provides a complete workflow for implementing a high-frame-rate video recording application using Flutter and iOS native code. Additional details like widgets are available in the source files.
 
-Widget 就不詳細介紹了～ 可直接查看 main.dart 與 AppDelegate.swift(記得添加套件依賴與訪問權限！)
-
-當初也是踩了不少坑，才成功做出來🥲
-
-希望有幫助到大家！
+Feel free to explore and enhance the project further!
