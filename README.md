@@ -23,7 +23,9 @@ This project supports video recording in seven formats: 720p/30fps, 1080p/30fps,
 The following project results image.
 （以下為專案成果圖）
 
-<img src= https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282 width="40%" height="40%">
+<p align="center">
+<img src= https://github.com/oakleychen0707/flutter_camera_60fps_ios/assets/98889131/89143f07-168b-4492-bfc7-c0d015f71282 width=300 >
+</p>
 
 ------------------------------------------------------------------------------------------------------------------
 
@@ -193,7 +195,7 @@ __因為 camera套件本身就是設置成30fps，所以上面組要是針對30f
 
 •  1080120 → 1080p/120fps
 
-## 如果想要其他的錄影格式，可以使用以下程式碼，去印出設備所支援的所有格式
+### 如果想要其他的錄影格式，可以使用以下程式碼，去印出設備所支援的所有格式
 
 ```
 for format in device.formats{
