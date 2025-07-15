@@ -1,5 +1,7 @@
 # flutter_camera_60fps_ios
 
+Creating a video recording application with Flutter camera package that allows setting resolution and frame rates of 60fps and 120fps.
+
 ## Overview
 
 ### Chinese Version:
